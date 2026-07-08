@@ -84,6 +84,33 @@ Desktop.ini
 .claude/
 
 # ============================================
+# Frontend / Node.js
+# ============================================
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Lock files (uncomment the one you use)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Build artifacts
+*.tsbuildinfo
+.eslintcache
+
+# Vite
+*.timestamp-*-*.mjs
+
+# Cypress
+/cypress/videos/
+/cypress/screenshots/
+
+# Vitest
+__screenshots__/
+
+# ============================================
 # Misc
 # ============================================
 *.bak
