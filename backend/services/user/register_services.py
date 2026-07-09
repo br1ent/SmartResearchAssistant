@@ -33,7 +33,7 @@ class RegisterServices:
             username=form.username,
             email=form.email,
             password_hash=hash_password(form.password),
-            photo="/static/avatars/default.png",
+            photo="http://127.0.0.1:8000/static/user/avatars/default.png",
         )
         self.db.add(user)
         self.db.commit()
@@ -45,6 +45,6 @@ class RegisterServices:
                 "id": str(user.id),
                 "username": user.username,
                 "email": user.email,
-                "photo": "/static/user/avatar/default.png",
+                "photo": user.photo,
             },
         }
