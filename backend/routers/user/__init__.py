@@ -4,6 +4,7 @@ from routers.user.refresh import router as refresh_router
 from routers.user.logout import router as logout_router
 from routers.user.reset_pwd import router as reset_pwd_router
 from routers.user.get_user_info import router as get_user_info
+from routers.user.profile import router as profile_router
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -13,3 +14,4 @@ router.include_router(refresh_router)
 router.include_router(logout_router)
 router.include_router(reset_pwd_router)
 router.include_router(get_user_info)
+router.include_router(profile_router)

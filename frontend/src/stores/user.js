@@ -7,6 +7,8 @@ export const useUserStore = defineStore('user', () => {
   const username = ref("")
   const email = ref("")
   const photo = ref("")
+  const createAt = ref("")
+  const updateAt = ref("")
   const hasPullUserInfo = ref(false)
   const accessToken = ref("")
 
@@ -33,6 +35,8 @@ export const useUserStore = defineStore('user', () => {
     username.value = data.username
     email.value = data.email
     photo.value = data.photo
+    if (data.create_at) createAt.value = data.create_at
+    if (data.update_at) updateAt.value = data.update_at
   }
 
   function setHasPullUserInfo(newStatus) {
@@ -73,6 +77,8 @@ export const useUserStore = defineStore('user', () => {
     username.value = ""
     email.value = ""
     photo.value = ""
+    createAt.value = ""
+    updateAt.value = ""
     accessToken.value = ""
   }
 
@@ -81,6 +87,8 @@ export const useUserStore = defineStore('user', () => {
     email,
     username,
     photo,
+    createAt,
+    updateAt,
     accessToken,
     hasPullUserInfo,
     setUserInfo,

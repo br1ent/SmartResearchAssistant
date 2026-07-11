@@ -58,7 +58,7 @@ async function handleLogout() {
         </router-link>
       </li>
 
-      <li class="border-t border-base-200 my-1"></li>
+      <li></li>
 
       <!-- 我的报告 -->
       <li>
