@@ -8,6 +8,7 @@ import ReportView from "@/views/report/ReportView.vue";
 import ResetPwdView from "@/views/user/ResetPwdView.vue";
 import NotFoundView from "@/views/error/NotFoundView.vue";
 import { useUserStore } from "@/stores/user.js";
+import ProfileView from "@/views/user/space/ProfileView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,6 +37,12 @@ const router = createRouter({
       path: '/chat',
       name: 'chat-index',
       component: ResearchView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/user/space',
+      name: 'user-space-index',
+      component: ProfileView,
       meta: { requiresAuth: true },
     },
     {

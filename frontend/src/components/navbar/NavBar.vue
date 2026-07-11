@@ -20,7 +20,7 @@ import UserMenu from "@/components/navbar/userMenu/UserMenu.vue";
 
       <router-link
         :to="{name:'chat-index'}"
-        class="btn btn-ghost"
+        class="btn btn-ghost text-base"
       >
         研究界面
       </router-link>

@@ -1,8 +1,8 @@
 <script setup>
-import { computed } from "vue";
 import { useUserStore } from "@/stores/user.js";
 import http from "@/js/http/api.js";
 import { useRouter } from "vue-router";
+import { User, FileText, LogOut } from '@lucide/vue';
 
 const user = useUserStore();
 const router = useRouter();
@@ -29,8 +29,12 @@ async function handleLogout() {
 
 <template>
   <div v-if="!user.isLogin()">
-    <router-link :to="{ name: 'user-login-index' }" class="btn btn-ghost">登录</router-link>
-    <router-link :to="{ name: 'user-register-index' }" class="btn btn-ghost">注册</router-link>
+    <router-link :to="{ name: 'user-login-index' }" class="btn btn-ghost">
+      登录
+    </router-link>
+    <router-link :to="{ name: 'user-register-index' }" class="btn btn-ghost">
+      注册
+    </router-link>
   </div>
 
   <div v-else class="dropdown dropdown-end">
@@ -41,16 +45,35 @@ async function handleLogout() {
     </div>
     <ul
       tabindex="0"
-      class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow"
+      class="menu dropdown-content bg-base-100 rounded-box z-10 w-48 shadow"
     >
+      <!-- 用户名 -->
+      <li class="menu-title px-4 pt-3 pb-1 text-xs text-base-content/50">
+        账号
+      </li>
       <li>
-        <router-link :to="{ name: 'report-index' }" class="text-sm font-bold" @click="closeMenu">
-          我的报告
+        <router-link :to="{name: 'user-space-index'}" class="flex items-center gap-3 px-4 py-2 font-semibold" @click="closeMenu">
+          <User class="w-4 h-4 shrink-0" />
+          <span class="truncate">{{ user.username }}</span>
         </router-link>
       </li>
-      <li></li>
+
+      <li class="border-t border-base-200 my-1"></li>
+
+      <!-- 我的报告 -->
       <li>
-        <a class="text-error font-bold text-sm" @click="handleLogout">退出登录</a>
+        <router-link :to="{ name: 'report-index' }" class="flex items-center gap-3 px-4 py-2" @click="closeMenu">
+          <FileText class="w-4 h-4 shrink-0" />
+          <span>我的报告</span>
+        </router-link>
+      </li>
+
+      <!-- 退出登录 -->
+      <li>
+        <a class="flex items-center gap-3 px-4 py-2 text-error" @click="handleLogout">
+          <LogOut class="w-4 h-4 shrink-0" />
+          <span>退出登录</span>
+        </a>
       </li>
     </ul>
   </div>
