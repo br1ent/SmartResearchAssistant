@@ -35,7 +35,7 @@ function formatTime(isoStr) {
     <div class="flex items-center justify-center gap-2 px-4 py-2 border-b border-base-200 bg-base-100/80">
       <button
         class="btn btn-sm gap-1.5"
-        :class="chatStore.mode === 'chat' ? 'btn-primary' : 'btn-ghost'"
+        :class="chatStore.mode === 'chat' ? 'btn-neutral' : 'btn-ghost'"
         @click="chatStore.switchMode('chat')"
         :disabled="chatStore.isResearching || chatStore.isChatting"
       >
@@ -44,7 +44,7 @@ function formatTime(isoStr) {
       </button>
       <button
         class="btn btn-sm gap-1.5"
-        :class="chatStore.mode === 'research' ? 'btn-primary' : 'btn-ghost'"
+        :class="chatStore.mode === 'research' ? 'btn-neutral' : 'btn-ghost'"
         @click="chatStore.switchMode('research')"
         :disabled="chatStore.isResearching || chatStore.isChatting"
       >
@@ -133,9 +133,6 @@ function formatTime(isoStr) {
           <div class="flex items-center gap-2">
             <Loader2 class="w-4 h-4 animate-spin text-info" />
             <span class="text-sm text-base-content/70">{{ chatStore.researchMessage || '处理中...' }}</span>
-          </div>
-          <div class="w-full bg-base-300 rounded-full h-1.5 mt-2">
-            <div class="bg-info h-1.5 rounded-full transition-all duration-500" :style="{ width: chatStore.researchProgress + '%' }"></div>
           </div>
         </div>
       </div>

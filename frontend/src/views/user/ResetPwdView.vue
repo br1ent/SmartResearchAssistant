@@ -77,7 +77,7 @@ async function handleReset() {
 
         <div class="form-control mb-4">
           <label class="label"><span class="label-text">确认密码</span></label>
-          <input type="password"class="input input-bordered w-full" v-model="confirmPassword" />
+          <input type="password" class="input input-bordered w-full" v-model="confirmPassword" />
         </div>
 
         <div v-if="errorMessage" class="text-error text-sm mb-2">

@@ -225,11 +225,29 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  // ---- 删除对话 ----
+  async function deleteConversation(convId) {
+    if (!convId) return
+    try {
+      const res = await http.delete(`/api/chat/conversations/${convId}`)
+      if (res.data?.success) {
+        conversations.value = conversations.value.filter(c => c.id !== convId)
+        if (currentConvId.value === convId) {
+          currentConvId.value = null
+          messages.value = []
+        }
+      }
+    } catch (e) {
+      console.error('删除对话失败', e)
+    }
+  }
+
   return {
     conversations, currentConvId, messages, mode, switchMode,
     isResearching, researchProgress, researchMessage, isChatting, wsConnected,
     planReportId, confirmResearch,
     fetchConversations, createConversation, fetchMessages, addMessage,
     sendMessage, selectConversation, connectWebSocket, disconnectWebSocket,
+    deleteConversation,
   }
 })

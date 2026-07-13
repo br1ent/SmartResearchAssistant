@@ -1,11 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { MessageCircle, Trash2, Loader2, BookOpen, MessageCircle as ChatIcon } from '@lucide/vue'
+import { Trash2, Loader2, BookOpen, MessageCircle as ChatIcon } from '@lucide/vue'
 import { useChatStore } from '@/stores/chat.js'
 
 const chatStore = useChatStore()
 
 const loading = ref(true)
+const showDeleteModal = ref(false)
+const deletingConv = ref(null)
+const isDeleting = ref(false)
 
 const emit = defineEmits(['selectChat'])
 
@@ -18,6 +21,25 @@ onMounted(async () => {
 function selectChat(conv) {
   chatStore.selectConversation(conv)
   emit('selectChat', conv)
+}
+
+function openDeleteModal(conv, event) {
+  event.stopPropagation()
+  deletingConv.value = conv
+  showDeleteModal.value = true
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false
+  deletingConv.value = null
+}
+
+async function confirmDelete() {
+  if (!deletingConv.value) return
+  isDeleting.value = true
+  await chatStore.deleteConversation(deletingConv.value.id)
+  isDeleting.value = false
+  closeDeleteModal()
 }
 
 function formatTime(isoStr) {
@@ -66,11 +88,33 @@ function formatTime(isoStr) {
           </div>
           <p class="text-xs text-base-content/30">{{ formatTime(conv.updated_at) }}</p>
         </div>
-        <!-- hover 时显示删除按钮（暂不实现删除功能） -->
-        <button class="opacity-0 group-hover:opacity-100 btn btn-ghost btn-xs btn-circle transition-opacity" title="删除">
+        <!-- hover 时显示删除按钮 -->
+        <button class="opacity-0 group-hover:opacity-100 btn btn-ghost btn-xs btn-circle transition-opacity" title="删除" @click.stop="openDeleteModal(conv, $event)">
           <Trash2 class="w-4 h-4 text-base-content/40" />
         </button>
       </div>
     </template>
+  </div>
+
+  <!-- 删除确认模态框 -->
+  <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="closeDeleteModal">
+    <div class="card bg-base-100 shadow-xl max-w-sm w-full mx-4">
+      <div class="card-body">
+        <h3 class="card-title text-lg">确认删除</h3>
+        <p class="text-sm text-base-content/70 py-2">
+          确定删除对话 <strong>"{{ deletingConv?.title }}"</strong> 吗？此操作不可撤销。
+        </p>
+        <div class="card-actions justify-end gap-2 mt-2">
+          <button class="btn btn-ghost" @click="closeDeleteModal">
+            取消
+          </button>
+          <button class="btn btn-danger text-error" :disabled="isDeleting" @click="confirmDelete">
+            <Loader2 v-if="isDeleting" class="w-4 h-4 animate-spin" />
+            <Trash2 v-else class="w-4 h-4" />
+            确认删除
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
