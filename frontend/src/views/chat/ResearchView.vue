@@ -1,16 +1,19 @@
 <script setup>
 import { ref } from 'vue'
-import { PanelLeft, MessageSquarePlus, Search } from '@lucide/vue'
+import { PanelLeft, PanelLeftClose, MessageSquarePlus, Search } from '@lucide/vue'
 import SidebarTool from './components/SidebarTool.vue'
 import RecentChats from './components/RecentChats.vue'
 import ChatMain from './components/ChatMain.vue'
 import SearchView from './components/SearchView.vue'
+import { useChatStore } from '@/stores/chat.js'
 
 const sidebarOpen = ref(true)
 const showSearch = ref(false)
+const chatStore = useChatStore()
 
 function onNewChat() {
   showSearch.value = false
+  chatStore.switchMode(chatStore.mode)
 }
 
 function onShowSearch() {
@@ -41,9 +44,7 @@ function onSelectChat(chat) {
             <span class="font-semibold">多智能体研究</span>
           </div>
           <button class="btn btn-ghost btn-xs btn-circle" @click="sidebarOpen = false" title="收起侧边栏">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-            </svg>
+            <PanelLeftClose class="w-5 h-5" />
           </button>
         </div>
         <div class="p-3 border-b border-base-200">

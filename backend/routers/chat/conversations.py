@@ -6,6 +6,7 @@ from config.database import get_db
 from models.user import User
 from utils.auth import get_current_user
 from schemas.chat import ConversationCreate, ConversationOut, MessageOut
+from models.chat import Conversation as ConvModel
 from models.project import Report, Source
 from services.chat import ConversationService
 
@@ -51,6 +52,22 @@ def get_messages(
         raise HTTPException(status_code=404, detail="对话不存在")
     msgs = service.get_messages(conv_id)
     return {"success": True, "data": [MessageOut.model_validate(m) for m in msgs]}
+
+
+@router.get("/conversations/search")
+def search_conversations(
+    q: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """搜索用户的对话"""
+    convs = (
+        db.query(ConvModel)
+        .filter(ConvModel.user_id == current_user.id, ConvModel.title.contains(q))
+        .order_by(ConvModel.update_at.desc())
+        .all()
+    )
+    return {"success": True, "data": [ConversationOut.model_validate(c) for c in convs]}
 
 
 @router.get("/conversations/{conv_id}/report")

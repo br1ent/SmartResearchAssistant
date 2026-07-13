@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from config.settings import get_settings
 from config.database import engine, Base, SessionLocal
 from routers.chat import router as chat_router
+from routers.chat.reports import router as reports_router
 from routers.user import router as user_router
 from websocket import manager as ws_manager
 from utils.auth import decode_token
@@ -21,6 +22,7 @@ app = FastAPI(
 # API 路由
 app.include_router(user_router)
 app.include_router(chat_router)
+app.include_router(reports_router)
 
 # 媒体文件（头像等）
 app.mount("/media", StaticFiles(directory="media"), name="media")
