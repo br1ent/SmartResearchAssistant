@@ -126,17 +126,6 @@ function formatTime(isoStr) {
         </div>
       </div>
 
-      <!-- 研究中的进度 -->
-      <div v-if="chatStore.isResearching" class="flex gap-3 items-start">
-        <AvatarBox role="assistant" />
-        <div class="bg-base-200 rounded-2xl rounded-tl-md px-4 py-2.5 max-w-[70%] min-w-[200px]">
-          <div class="flex items-center gap-2">
-            <Loader2 class="w-4 h-4 animate-spin text-info" />
-            <span class="text-sm text-base-content/70">{{ chatStore.researchMessage || '处理中...' }}</span>
-          </div>
-        </div>
-      </div>
-
       <!-- 闲聊中的等待 -->
       <div v-if="chatStore.isChatting" class="flex gap-3 items-start">
         <AvatarBox role="assistant" />

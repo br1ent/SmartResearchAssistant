@@ -114,6 +114,14 @@ class ResearchService:
             from services.chat import ConversationService
             conv_service = ConversationService(db)
 
+            async def agent_broadcast(agent: str, task: str, detail: str = ""):
+                await manager.broadcast(conversation_id, {
+                    "type": "agent_task",
+                    "agent": agent,
+                    "task": task,
+                    "detail": detail,
+                })
+
             state = {
                 "topic": "", "user_id": user_id, "conversation_id": conversation_id,
                 "outline": outline, "subtasks": subtasks,
@@ -122,13 +130,37 @@ class ResearchService:
                 "status": "running", "progress": 25.0, "error": None, "reviewer_retries": 0,
             }
 
-            result = await execution_workflow.run(state)
+            await agent_broadcast("researcher", "正在搜索研究资料", f"共 {len(subtasks)} 个子任务，并行搜索中...")
+            from agents.nodes.researcher import researcher_node
+            state.update(await researcher_node(state))
 
-            if result.get("final_report"):
-                content = result["final_report"]
-                if result.get("sources"):
+            await agent_broadcast("analyst", "正在分析搜索结果", f"共 {len(state['search_results'])} 条结果，提炼关键发现...")
+            from agents.nodes.analyst import analyst_node
+            state.update(await analyst_node(state))
+
+            await agent_broadcast("writer", "正在撰写研究报告", "根据大纲和分析结果生成报告...")
+            from agents.nodes.writer import writer_node
+            state.update(writer_node(state))
+
+            retries = 0
+            while retries <= 2:
+                await agent_broadcast("reviewer", "正在审查报告质量", "从完整性、准确性、深度等维度评分...")
+                from agents.nodes.reviewer import reviewer_node
+                state.update(reviewer_node(state))
+                if state["status"] == "completed":
+                    break
+                retries += 1
+                if retries <= 2:
+                    await agent_broadcast("writer", "正在根据审查意见修改报告", f"第 {retries} 次修改...")
+                    state.update(writer_node(state))
+
+            final_report = state.get("final_report") or state.get("report_draft", "")
+
+            if final_report:
+                content = final_report
+                if state.get("sources"):
                     content += "\n\n---\n## 参考资料\n"
-                    for s in result["sources"]:
+                    for s in state["sources"]:
                         content += f"- [{s['index']}] {s['title']} — {s['url']}\n"
 
                 report = db.query(Report).filter(Report.id == report_id).first()
@@ -137,21 +169,32 @@ class ResearchService:
                     report.status = "completed"
                     db.commit()
 
-                for s in result.get("sources", []):
+                for s in state.get("sources", []):
                     db.add(Source(report_id=report_id, index=s["index"], title=s["title"], url=s["url"], snippet=s.get("snippet", "")))
                 db.commit()
 
+                outline_text = "\n".join(f"- {o}" for o in outline)
+                report_title = state.get("report_title", "研究报告")
+                source_count = len(state.get("sources", []))
+                summary = (
+                    f"📄 **研究报告已生成**\n\n"
+                    f"**标题**：{report_title}\n"
+                    f"**大纲**\n{outline_text}\n"
+                    f"**引用来源**：共 {source_count} 篇\n"
+                    f"**预估字数**：约 {len(content)} 字\n\n"
+                    f"报告已保存到「我的报告」页面。"
+                )
                 conv_service.add_message(conv_id=conversation_id, role="assistant",
-                    content=f"📄 研究报告已生成！\n\n{content[:500]}...", msg_type="report",
+                    content=summary, msg_type="report",
                     metadata_json=json.dumps({"report_id": report_id}))
-
                 await manager.broadcast(conversation_id, {"type": "report_completed", "report_id": report_id, "progress": 100})
             else:
-                error = result.get("error", "未知错误")
+                error = state.get("error", "未知错误")
                 conv_service.add_message(conv_id=conversation_id, role="assistant", content=f"❌ 报告生成失败：{error}", msg_type="error")
                 report = db.query(Report).filter(Report.id == report_id).first()
                 if report: report.status = "failed"; db.commit()
                 await manager.broadcast(conversation_id, {"type": "error", "message": error})
+
         except Exception as e:
             import traceback
             error_detail = f"{type(e).__name__}: {str(e)}"
