@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { PanelLeft, PanelLeftClose, MessageSquarePlus, Search } from '@lucide/vue'
 import SidebarTool from './components/SidebarTool.vue'
 import RecentChats from './components/RecentChats.vue'
 import ChatMain from './components/ChatMain.vue'
 import SearchView from './components/SearchView.vue'
+import PlanPanel from './components/PlanPanel.vue'
 import { useChatStore } from '@/stores/chat.js'
 
 const sidebarOpen = ref(true)
@@ -27,6 +28,23 @@ function onCloseSearch() {
 function onSelectChat(chat) {
   showSearch.value = false
 }
+
+function onConfirmPlan() {
+  chatStore.confirmResearch()
+}
+
+function onRevisePlan(reportId, feedback) {
+  chatStore.revisePlan(reportId, feedback)
+}
+
+function onClosePlan() {
+  chatStore.closePlanPanel()
+}
+
+// 方案就绪时自动打开面板
+watch(() => chatStore.currentPlan, (val) => {
+  if (val) chatStore.openPlanPanel()
+})
 </script>
 
 <template>
@@ -85,6 +103,22 @@ function onSelectChat(chat) {
 
       <ChatMain v-else />
     </main>
+
+    <PlanPanel
+      v-if="chatStore.currentPlan && chatStore.planPanelOpen"
+      :plan="chatStore.currentPlan"
+      @confirm="onConfirmPlan"
+      @revise="onRevisePlan"
+      @close="onClosePlan"
+    />
+    <!-- 方案面板收起时的重新打开按钮 -->
+    <button
+      v-if="chatStore.currentPlan && !chatStore.planPanelOpen"
+      class="btn btn-neutral btn-sm fixed right-4 bottom-24 z-40 shadow-lg gap-1.5"
+      @click="chatStore.openPlanPanel()"
+    >
+      📋 查看方案
+    </button>
   </div>
 </template>
 

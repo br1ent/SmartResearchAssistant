@@ -44,6 +44,15 @@ onUnmounted(() => {
   chatStore.disconnectWebSocket()
 })
 
+function submitRevise(msg) {
+  const feedback = msg._reviseText?.trim()
+  if (!feedback || !msg.plan?.report_id) return
+  chatStore.revisePlan(msg.plan.report_id, feedback)
+  msg._revised = true
+  msg._showRevise = false
+  msg._reviseText = ''
+}
+
 async function sendMessage() {
   const text = inputText.value.trim()
   if (!text || chatStore.isResearching) return
@@ -137,24 +146,18 @@ function formatTime(isoStr) {
           </p>
           <!-- 研究方案（带确认按钮） -->
           <template v-else-if="msg.msg_type === 'plan_ready' && msg.plan">
-            <p class="text-sm font-semibold mb-2">📋 研究方案</p>
-            <div class="text-sm text-base-content/80 space-y-2">
-              <div v-if="msg.plan.outline && msg.plan.outline.length">
-                <p class="font-medium text-xs text-base-content/50 mb-1">大纲</p>
-                <p v-for="(item, j) in msg.plan.outline" :key="j" class="whitespace-pre-wrap">- {{ item }}</p>
-              </div>
-              <div v-if="msg.plan.subtasks && msg.plan.subtasks.length">
-                <p class="font-medium text-xs text-base-content/50 mt-2 mb-1">研究子任务</p>
-                <p v-for="(t, j) in msg.plan.subtasks" :key="j" class="whitespace-pre-wrap">{{ j + 1 }}. <strong>{{ t.title }}</strong> — {{ t.description }}</p>
-              </div>
+            <p class="text-sm font-semibold mb-1">📋 研究方案已生成</p>
+            <p class="text-xs text-base-content/50">
+              包含 {{ msg.plan.outline?.length || 0 }} 个章节，{{ msg.plan.subtasks?.length || 0 }} 个子任务
+            </p>
+            <p class="text-xs text-base-content/40 mt-1">右侧面板可查看完整方案</p>
+            <div class="mt-2" v-if="!msg._revised">
+              <button class="btn btn-sm btn-neutral" @click="chatStore.openPlanPanel()">
+                查看方案
+              </button>
             </div>
-            <div class="flex gap-2 mt-3">
-              <button class="btn btn-sm btn-primary" @click="chatStore.confirmResearch()" :disabled="chatStore.isResearching">
-                确认并开始研究
-              </button>
-              <button class="btn btn-sm btn-ghost" disabled>
-                修改方向（输入新消息修改）
-              </button>
+            <div v-if="msg._revised" class="mt-1 text-xs text-base-content/40">
+              已提交修改，正在生成新方案...
             </div>
           </template>
           <p v-else class="text-sm whitespace-pre-wrap">{{ msg.content }}</p>

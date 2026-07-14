@@ -118,7 +118,7 @@ function formatTime(isoStr) {
           <button class="btn btn-ghost" @click="closeDeleteModal">
             取消
           </button>
-          <button class="btn btn-danger text-error" :disabled="isDeleting" @click="confirmDelete">
+          <button class="btn btn-neutral" :disabled="isDeleting" @click="confirmDelete">
             <Loader2 v-if="isDeleting" class="w-4 h-4 animate-spin" />
             <Trash2 v-else class="w-4 h-4" />
             确认删除

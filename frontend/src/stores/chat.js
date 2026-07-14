@@ -14,6 +14,8 @@ export const useChatStore = defineStore('chat', () => {
   const researchMessage = ref('')
   const isChatting = ref(false)
   const planReportId = ref(null)  // 当前待确认的研究方案
+  const currentPlan = ref(null)   // {report_title, outline, subtasks, report_id}
+  const planPanelOpen = ref(false)
 
   // ---- 模式切换 ----
   function switchMode(newMode) {
@@ -21,6 +23,7 @@ export const useChatStore = defineStore('chat', () => {
     mode.value = newMode
     currentConvId.value = null
     messages.value = []
+    currentPlan.value = null
   }
 
   // ---- 对话列表 ----
@@ -104,6 +107,13 @@ export const useChatStore = defineStore('chat', () => {
           case 'plan_ready':
             isResearching.value = false
             planReportId.value = data.report_id
+            currentPlan.value = {
+              report_id: data.report_id,
+              report_title: data.report_title || '',
+              outline: data.outline || [],
+              subtasks: data.subtasks || [],
+            }
+            planPanelOpen.value = true
             addMessage({ id: Date.now(), role: 'assistant', content: '', msg_type: 'plan_ready', created_at: new Date().toISOString(), plan: { report_id: data.report_id, outline: data.outline, subtasks: data.subtasks } })
             break
           case 'pong': break
@@ -256,6 +266,7 @@ export const useChatStore = defineStore('chat', () => {
     isResearching.value = true
     researchProgress.value = 25
     researchMessage.value = '正在搜索资料...'
+    currentPlan.value = null
     addMessage({ id: Date.now(), role: 'user', content: '✅ 确认方案，开始研究', msg_type: 'text', created_at: new Date().toISOString() })
     addMessage({ id: Date.now() + 1, role: 'assistant', content: '🔍 正在搜索资料...', msg_type: 'agent_status', created_at: new Date().toISOString() })
     try {
@@ -283,6 +294,22 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  // ---- 修订研究方案 -------
+  async function revisePlan(reportId, feedback) {
+    const cid = currentConvId.value
+    if (!reportId || !cid || !feedback) return
+    addMessage({ id: Date.now(), role: 'user', content: `✏️ 修改意见：${feedback}`, msg_type: 'text', created_at: new Date().toISOString() })
+    addMessage({ id: Date.now() + 1, role: 'assistant', content: '🔄 正在根据反馈调整研究方案...', msg_type: 'agent_status', created_at: new Date().toISOString() })
+    try {
+      await http.post('/api/chat/research/revise', { conversation_id: cid, report_id: reportId, feedback })
+    } catch (e) {
+      console.error('修订失败', e)
+    }
+  }
+
+  function openPlanPanel() { planPanelOpen.value = true }
+  function closePlanPanel() { planPanelOpen.value = false }
+
   function resetStore() {
     conversations.value = []
     currentConvId.value = null
@@ -293,9 +320,10 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   return {
-    conversations, currentConvId, messages, mode, switchMode,
+    conversations, currentConvId, messages, currentPlan, mode, switchMode,
     isResearching, researchProgress, researchMessage, isChatting, wsConnected,
-    planReportId, confirmResearch,
+    planReportId, confirmResearch, revisePlan,
+    planPanelOpen, openPlanPanel, closePlanPanel,
     fetchConversations, createConversation, fetchMessages, addMessage,
     sendMessage, selectConversation, connectWebSocket, disconnectWebSocket,
     deleteConversation, loadMore, resetStore,

@@ -126,3 +126,32 @@ async def confirm_research(
         user_id=current_user.id,
         report_id=report_id,
     )
+
+
+@router.post("/research/revise")
+async def revise_research_plan(
+    body: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """用户修改研究方案"""
+    report_id = body.get("report_id")
+    conversation_id = body.get("conversation_id")
+    feedback = body.get("feedback", "").strip()
+    if not report_id or not conversation_id:
+        raise HTTPException(status_code=400, detail="缺少 report_id 或 conversation_id")
+    if not feedback:
+        raise HTTPException(status_code=400, detail="请填写修改意见")
+
+    conv_service = ConversationService(db)
+    conv = conv_service.get_by_id(conversation_id, current_user.id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="对话不存在")
+
+    research_service = ResearchService(db)
+    return await research_service.revise_plan(
+        conversation_id=conversation_id,
+        user_id=current_user.id,
+        report_id=report_id,
+        feedback=feedback,
+    )

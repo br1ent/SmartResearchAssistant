@@ -71,6 +71,7 @@ class ResearchService:
             await manager.broadcast(conversation_id, {
                 "type": "plan_ready",
                 "report_id": report_id,
+                "report_title": report_title,
                 "outline": outline,
                 "subtasks": [dict(s) for s in subtasks],
                 "progress": 20,
@@ -78,6 +79,73 @@ class ResearchService:
         except Exception as e:
             import traceback
             print(f"[Planning] ERROR: {e}"); traceback.print_exc()
+            await manager.broadcast(conversation_id, {"type": "error", "message": str(e)})
+        finally:
+            db.close()
+
+    async def revise_plan(self, conversation_id: int, user_id: int, report_id: int, feedback: str) -> dict:
+        """用户修改计划：重新运行 Planner，带上用户反馈"""
+        report = self.db.query(Report).filter(Report.id == report_id).first()
+        if not report:
+            return {"success": False, "message": "报告不存在"}
+
+        # 保存用户反馈
+        self.conv_service.add_message(conv_id=conversation_id, role="user", content=f"✏️ 修改意见：{feedback}", msg_type="text")
+        self.conv_service.add_message(conv_id=conversation_id, role="assistant", content="🔄 正在根据反馈调整研究方案...", msg_type="agent_status")
+
+        report.status = "planning"
+        self.db.commit()
+
+        import asyncio
+        asyncio.create_task(self._run_revise_plan(conversation_id, user_id, report_id, feedback))
+        return {"success": True, "message": "正在重新规划"}
+
+    async def _run_revise_plan(self, conversation_id: int, user_id: int, report_id: int, feedback: str):
+        """后台重新规划方案"""
+        db = SessionLocal()
+        try:
+            from services.chat import ConversationService as ConvSvc
+            conv_svc = ConvSvc(db)
+            conv = conv_svc.get_by_id(conversation_id, user_id)
+            if not conv:
+                return
+            topic = conv.title  # 用对话标题作为原主题
+            # 把反馈拼入 topic 让 Planner 理解修改需求
+            revised_topic = f"{topic}\n\n用户修改意见：{feedback}"
+
+            result = await planning_workflow.run(topic=revised_topic, user_id=user_id, conversation_id=conversation_id)
+            outline = result.get("outline", [])
+            subtasks = result.get("subtasks", [])
+            report_title = result.get("report_title", topic)
+
+            report = db.query(Report).filter(Report.id == report_id).first()
+            if report:
+                report.title = report_title
+                report.content = json.dumps({"outline": outline, "subtasks": [dict(s) for s in subtasks]}, ensure_ascii=False)
+                report.status = "awaiting_confirm"
+                db.commit()
+
+            plan_text = f"## 📋 修订后的研究方案\n\n**报告标题**：{report_title}\n\n**大纲**：\n"
+            for o in outline:
+                plan_text += f"- {o}\n"
+            plan_text += "\n**研究子任务**：\n"
+            for i, s in enumerate(subtasks, 1):
+                plan_text += f"{i}. **{s['title']}** — {s['description']}\n"
+
+            conv_svc.add_message(conv_id=conversation_id, role="assistant", content=plan_text, msg_type="plan_ready",
+                                 metadata_json=json.dumps({"report_id": report_id, "outline": outline, "subtasks": [dict(s) for s in subtasks]}, ensure_ascii=False))
+
+            await manager.broadcast(conversation_id, {
+                "type": "plan_ready",
+                "report_id": report_id,
+                "report_title": report_title,
+                "outline": outline,
+                "subtasks": [dict(s) for s in subtasks],
+                "progress": 20,
+            })
+        except Exception as e:
+            import traceback
+            print(f"[RevisePlan] ERROR: {e}"); traceback.print_exc()
             await manager.broadcast(conversation_id, {"type": "error", "message": str(e)})
         finally:
             db.close()
