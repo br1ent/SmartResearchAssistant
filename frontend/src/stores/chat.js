@@ -121,8 +121,22 @@ export const useChatStore = defineStore('chat', () => {
 
   // ---- 发送消息 ----
   async function sendMessage(text) {
-    if (isResearching.value || isChatting.value) return null
+    if (isResearching.value) return null
+    // 如果正在聊天，打断当前回复
+    if (isChatting.value) {
+      _abortStream()
+    }
     return mode.value === 'research' ? _startResearch(text) : _sendChat(text)
+  }
+
+  let _abortController = null
+
+  function _abortStream() {
+    if (_abortController) {
+      _abortController.abort()
+      _abortController = null
+    }
+    isChatting.value = false
   }
 
   async function _startResearch(topic) {
@@ -164,14 +178,17 @@ export const useChatStore = defineStore('chat', () => {
     addMessage({ id: assistantMsgId, role: 'assistant', content: '', msg_type: 'text', created_at: new Date().toISOString() })
 
     try {
-      // 使用原生 fetch 处理 SSE 流
-      const baseUrl = ''  // 同源，走 Vite proxy
+      _abortStream()
+
+      _abortController = new AbortController()
+      const baseUrl = ''
       const res = await fetch(`${baseUrl}/api/chat/send/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getAccessToken()}`,
         },
+        signal: _abortController.signal,
         body: JSON.stringify({
           conversation_id: currentConvId.value,
           message: text,

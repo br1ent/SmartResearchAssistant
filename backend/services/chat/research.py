@@ -7,7 +7,7 @@ from agents.graph import PlanningWorkflow, ExecutionWorkflow
 from config.database import SessionLocal
 from models.chat import Message
 from models.project import Report, Source
-from websocket import manager
+from utils.ws_manager import manager
 
 planning_workflow = PlanningWorkflow()
 execution_workflow = ExecutionWorkflow()

@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onUnmounted, computed } from 'vue'
+import { ref, onUnmounted, onMounted, watch, computed, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { Send, Loader2, BookOpen, MessageCircle } from '@lucide/vue'
 import { useUserStore } from '@/stores/user.js'
 import { useChatStore } from '@/stores/chat.js'
@@ -7,8 +8,26 @@ import AvatarBox from './AvatarBox.vue'
 
 const userStore = useUserStore()
 const chatStore = useChatStore()
+const route = useRoute()
 
 const inputText = ref('')
+const inputRef = ref(null)
+
+function focusInput() {
+  nextTick(() => inputRef.value?.focus())
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    const el = document.querySelector('.msg-scroll-container')
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  })
+}
+
+onMounted(focusInput)
+watch(() => route.path, (to) => {
+  if (to === '/chat') focusInput()
+})
 
 // 闲聊模式只显示文本消息；研究模式显示全部
 const visibleMessages = computed(() => {
@@ -18,13 +37,16 @@ const visibleMessages = computed(() => {
   return chatStore.messages
 })
 
+// 消息更新时自动滚到底部
+watch(visibleMessages, () => scrollToBottom(), { deep: true })
+
 onUnmounted(() => {
   chatStore.disconnectWebSocket()
 })
 
 async function sendMessage() {
   const text = inputText.value.trim()
-  if (!text || chatStore.isResearching || chatStore.isChatting) return
+  if (!text || chatStore.isResearching) return
 
   inputText.value = ''
   await chatStore.sendMessage(text)
@@ -61,7 +83,6 @@ function formatTime(isoStr) {
       </button>
     </div>
 
-    <!-- 欢迎区域 -->
     <div v-if="visibleMessages.length === 0" class="flex-1 flex flex-col items-center justify-center px-6">
       <!-- 研究模式 -->
       <template v-if="chatStore.mode === 'research'">
@@ -84,7 +105,7 @@ function formatTime(isoStr) {
     </div>
 
     <!-- 消息列表 -->
-    <div v-else class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+    <div v-if="visibleMessages.length > 0" class="msg-scroll-container flex-1 overflow-y-auto px-6 py-4 space-y-4">
       <!-- 加载更早消息 -->
       <div v-if="chatStore.hasMore" class="flex justify-center">
         <button class="btn btn-ghost btn-sm text-base-content/50" @click="chatStore.loadMore()" :disabled="chatStore.isLoadingMore">
@@ -158,19 +179,19 @@ function formatTime(isoStr) {
       <div class="max-w-4xl mx-auto flex gap-2">
         <div class="flex-1 relative">
           <input
-            v-model="inputText"
+            v-model="inputText" ref="inputRef"
             type="text"
             class="input input-bordered w-full rounded-full pl-4 pr-12"
             :placeholder="chatStore.mode === 'research'
               ? (chatStore.isResearching ? '研究进行中...' : '输入研究主题...')
-              : (chatStore.isChatting ? '等待回复...' : '输入消息...')"
-            :disabled="chatStore.isResearching || chatStore.isChatting"
+              : (chatStore.isChatting ? '输入新消息打断当前回复...' : '输入消息...')"
+            :disabled="chatStore.isResearching"
             @keydown.enter="sendMessage"
           />
         </div>
         <button
           class="btn btn-neutral btn-circle shrink-0"
-          :disabled="!inputText.trim() || chatStore.isResearching || chatStore.isChatting"
+          :disabled="!inputText.trim() || chatStore.isResearching"
           @click="sendMessage"
         >
           <Send class="w-4 h-4" />
