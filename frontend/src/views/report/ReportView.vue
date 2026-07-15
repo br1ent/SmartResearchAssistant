@@ -156,7 +156,7 @@ function statusBadge(status) {
           <button class="btn btn-ghost btn-sm btn-circle shrink-0" @click="closeModal"><X class="w-5 h-5" /></button>
         </div>
         <div class="overflow-y-auto px-6 py-5" style="flex: 1; min-height: 0;">
-          <div class="prose prose-sm max-w-none leading-relaxed break-words" v-html="marked(currentReport.content)"></div>
+          <div class="report-content leading-relaxed break-words" v-html="marked(currentReport.content)"></div>
           <div v-if="currentReport.sources && currentReport.sources.length" class="mt-6 pt-4 border-t border-base-200">
             <h3 class="text-sm font-semibold mb-2 flex items-center gap-1.5"><BookOpen class="w-4 h-4" /> 参考资料</h3>
             <div v-for="s in currentReport.sources" :key="s.index" class="text-xs text-base-content/60 py-1 flex items-start gap-2">
@@ -169,3 +169,19 @@ function statusBadge(status) {
     </div>
   </main>
 </template>
+
+<style scoped>
+.report-content :deep(p) { margin: 0.6rem 0; line-height: 1.8; }
+.report-content :deep(h1) { font-size: 1.4rem; font-weight: 700; margin: 1.2rem 0 0.8rem; }
+.report-content :deep(h2) { font-size: 1.15rem; font-weight: 600; margin: 1.2rem 0 0.6rem; border-bottom: 1px solid hsl(var(--bc) / 0.15); padding-bottom: 0.3rem; }
+.report-content :deep(h3) { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.4rem; }
+.report-content :deep(h4) { font-size: 0.95rem; font-weight: 600; margin: 0.8rem 0 0.3rem; }
+.report-content :deep(table) { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.9rem; }
+.report-content :deep(th) { background: hsl(var(--b2)); padding: 0.5rem 0.75rem; border: 1px solid hsl(var(--bc) / 0.2); font-weight: 600; text-align: left; }
+.report-content :deep(td) { padding: 0.4rem 0.75rem; border: 1px solid hsl(var(--bc) / 0.15); }
+.report-content :deep(tr):nth-child(even) td { background: hsl(var(--b2) / 0.5); }
+.report-content :deep(hr) { margin: 1.2rem 0; border-color: hsl(var(--bc) / 0.1); }
+.report-content :deep(ul), .report-content :deep(ol) { margin: 0.4rem 0 0.4rem 1.5rem; }
+.report-content :deep(li) { margin: 0.2rem 0; line-height: 1.7; }
+.report-content :deep(blockquote) { border-left: 3px solid hsl(var(--bc) / 0.3); padding-left: 0.8rem; margin: 0.6rem 0; color: hsl(var(--bc) / 0.7); }
+</style>
