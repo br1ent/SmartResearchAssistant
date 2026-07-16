@@ -88,7 +88,7 @@ Desktop.ini
 # Claude
 # ============================================
 .claude/
-.reasonix/
+.reasonix
 
 # ============================================
 # Frontend / Node.js

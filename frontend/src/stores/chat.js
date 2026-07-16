@@ -94,8 +94,7 @@ export const useChatStore = defineStore('chat', () => {
             isResearching.value = true; researchProgress.value = data.progress; researchMessage.value = data.message; break
           case 'agent_task':
             isResearching.value = true
-            researchMessage.value = `${data.agent}: ${data.task}`
-            if (data.detail) researchMessage.value += ` — ${data.detail}`
+            researchMessage.value = data.task
             researchProgress.value = data.progress || researchProgress.value
             break
           case 'report_completed':

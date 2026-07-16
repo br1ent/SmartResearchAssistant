@@ -3,6 +3,7 @@ import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
+from models import Conversation
 from models.chat import Conversation, Message
 
 
@@ -25,7 +26,7 @@ class ConversationService:
             self.db.refresh(conv)
         return conv
 
-    def list_by_user(self, user_id: int) -> list[Conversation]:
+    def list_by_user(self, user_id: int) -> list[type[Conversation]]:
         return (
             self.db.query(Conversation)
             .filter(Conversation.user_id == user_id)
