@@ -1,7 +1,7 @@
 """记忆 LangGraph：START → extract_memory → END"""
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Optional
-from agents.nodes.memory_node import extract_memory_node
+from agents.memory.nodes.extract import extract_memory_node
 
 
 class MemoryState(TypedDict):

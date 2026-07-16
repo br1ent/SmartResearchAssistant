@@ -5,7 +5,7 @@ from typing import List
 from langchain_tavily import TavilySearch
 
 from config.agents import get_agent_settings
-from agents.state import ResearchState, ResearchSubtask, SearchResultItem
+from agents.research.state import ResearchState, ResearchSubtask, SearchResultItem
 
 settings = get_agent_settings()
 

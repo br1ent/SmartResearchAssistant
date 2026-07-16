@@ -3,7 +3,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from agents.graph import PlanningWorkflow, ExecutionWorkflow
+from agents.research.graph import PlanningWorkflow, ExecutionWorkflow
 from config.database import SessionLocal
 from models.chat import Message
 from models.project import Report, Source
@@ -200,21 +200,21 @@ class ResearchService:
             }
 
             await agent_broadcast("researcher", "正在搜索研究资料", f"共 {len(subtasks)} 个子任务，并行搜索中...", 30)
-            from agents.nodes.researcher import researcher_node
+            from agents.research.nodes.researcher import researcher_node
             state.update(await researcher_node(state))
 
             await agent_broadcast("analyst", "正在分析搜索结果", f"共 {len(state['search_results'])} 条结果，提炼关键发现...", 50)
-            from agents.nodes.analyst import analyst_node
+            from agents.research.nodes.analyst import analyst_node
             state.update(analyst_node(state))
 
             await agent_broadcast("writer", "正在撰写研究报告", "根据大纲和分析结果生成报告...请耐心等待", 65)
-            from agents.nodes.writer import writer_node
+            from agents.research.nodes.writer import writer_node
             state.update(writer_node(state))
 
             retries = 0
             while retries <= 2:
                 await agent_broadcast("reviewer", "正在审查报告质量", "从完整性、准确性、深度等维度评分...", 85)
-                from agents.nodes.reviewer import reviewer_node
+                from agents.research.nodes.reviewer import reviewer_node
                 state.update(reviewer_node(state))
                 if state["status"] == "completed":
                     break

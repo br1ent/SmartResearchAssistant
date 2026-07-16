@@ -1,12 +1,12 @@
 """LangGraph 研究多 Agent 工作流（两阶段：规划 + 执行）"""
 from langgraph.graph import StateGraph, END
 
-from agents.state import ResearchState
-from agents.nodes.planner import planner_node
-from agents.nodes.researcher import researcher_node
-from agents.nodes.analyst import analyst_node
-from agents.nodes.writer import writer_node
-from agents.nodes.reviewer import reviewer_node
+from agents.research.state import ResearchState
+from agents.research.nodes.planner import planner_node
+from agents.research.nodes.researcher import researcher_node
+from agents.research.nodes.analyst import analyst_node
+from agents.research.nodes.writer import writer_node
+from agents.research.nodes.reviewer import reviewer_node
 
 
 def should_review(state: ResearchState) -> str:
@@ -16,6 +16,7 @@ def should_review(state: ResearchState) -> str:
     return "rewrite"
 
 
+# noinspection PyTypeChecker
 def _make_initial_state(topic: str, user_id: int, conversation_id: int) -> ResearchState:
     return {
         "topic": topic,

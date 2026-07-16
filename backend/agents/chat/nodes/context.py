@@ -1,7 +1,7 @@
 """闲聊上下文组装节点：从 DB 读取历史、记忆、提示词，组装 LLM 消息列表"""
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
-from agents.chat_state import ChatState
+from agents.chat.state import ChatState
 from config.prompts import get_chat_system_prompt
 from config.database import SessionLocal
 
@@ -29,7 +29,7 @@ def build_context_node(state: ChatState) -> dict:
     # 3. 历史消息
     db = SessionLocal()
     try:
-        from services.chat.conversation_service import ConversationService
+        from services.chat.conversation import ConversationService
         conv_service = ConversationService(db)
         history = conv_service.get_messages(conversation_id, limit=20)
         history_dicts = [{"role": m.role, "content": m.content} for m in history]

@@ -1,8 +1,8 @@
 """闲聊工具执行节点：解析 tool_calls 并执行对应工具"""
 from langchain_core.messages import ToolMessage
 
-from agents.chat_state import ChatState
-from agents.tools import CHAT_TOOLS
+from agents.chat.state import ChatState
+from agents.chat.tools import CHAT_TOOLS
 
 
 # 工具名 → 工具函数的映射

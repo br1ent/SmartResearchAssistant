@@ -1,5 +1,4 @@
 """Chat 服务包"""
-from services.chat.conversation_service import ConversationService
-from services.chat.research import ResearchService
+from services.chat.conversation import ConversationService
 
-__all__ = ["ConversationService", "ResearchService"]
+__all__ = ["ConversationService"]

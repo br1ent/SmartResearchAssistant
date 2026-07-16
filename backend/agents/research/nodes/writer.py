@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from config.agents import get_agent_settings
 from config.prompts import get_research_prompt
-from agents.state import ResearchState, SourceItem
+from agents.research.state import ResearchState, SourceItem
 
 settings = get_agent_settings()
 

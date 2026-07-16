@@ -1,8 +1,8 @@
 """闲聊 LangGraph：START → build_context → END（工具循环由 service 层协调）"""
 from langgraph.graph import StateGraph, END
 
-from agents.chat_state import ChatState
-from agents.nodes.chat_context_node import build_context_node
+from agents.chat.state import ChatState
+from agents.chat.nodes.context import build_context_node
 
 
 class ChatGraph:

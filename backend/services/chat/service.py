@@ -3,10 +3,10 @@ import asyncio
 from langchain_openai import ChatOpenAI
 
 from config.agents import get_agent_settings
-from agents.chat_graph import ChatGraph
-from agents.chat_state import ChatState
-from agents.tools import CHAT_TOOLS
-from agents.nodes.chat_tool_node import tool_node
+from agents.chat.graph import ChatGraph
+from agents.chat.state import ChatState
+from agents.chat.tools import CHAT_TOOLS
+from agents.chat.nodes.tool_node import tool_node
 
 settings = get_agent_settings()
 
@@ -24,7 +24,7 @@ chat_graph = ChatGraph()
 class ChatService:
     def __init__(self, db_session):
         self.db = db_session
-        from services.chat.conversation_service import ConversationService
+        from services.chat.conversation import ConversationService
         self.conv_service = ConversationService(db_session)
 
     def _get_user_memory(self, user_id: int) -> str:
@@ -40,7 +40,7 @@ class ChatService:
             self.db.commit()
 
     async def _run_memory_extraction(self, conversation_id: int, user_id: int):
-        from agents.memory_graph import MemoryGraph
+        from agents.memory.graph import MemoryGraph
         mg = MemoryGraph()
 
         history = self.conv_service.get_messages(conversation_id, user_id=user_id, limit=20)
