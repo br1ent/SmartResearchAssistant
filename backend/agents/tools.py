@@ -21,26 +21,49 @@ def get_current_time() -> str:
 
 @tool
 def get_weather(city: str) -> str:
-    """查询指定城市的当前天气。当用户询问某地天气、温度、是否下雨等问题时使用。"""
+    """查询指定城市的当前天气。当用户询问某地天气、温度、是否下雨等问题时使用。
+
+    Args:
+        city: 城市名称，支持中文如"北京"，或 LocationID 如"101010100"
+    """
     host = settings.QWEATHER_API_HOST
     api_key = settings.QWEATHER_API_KEY
     if not host or not api_key:
         return "天气查询失败：未配置和风天气 API Host 或 API Key"
 
+    host = host.replace("https://", "").replace("http://", "").strip("/")
+
     try:
-        resp = httpx.get(
-            f"https://{host}/v7/weather/now",
-            params={"location": city},
-            headers={"X-QW-Api-Key": api_key},
-            timeout=10.0,
+        # Step 1: GeoAPI 将城市名转为 LocationID
+        geo_resp = httpx.get(
+            f"https://{host}/geo/v2/city/lookup",
+            params={"location": city, "key": api_key, "lang": "zh"},
+            timeout=5.0,
         )
-        resp.raise_for_status()
-        data = resp.json()
+        geo_resp.raise_for_status()
+        geo_data = geo_resp.json()
+
+        if geo_data.get("code") != "200" or not geo_data.get("location"):
+            return f"天气查询失败：找不到城市 '{city}'"
+
+        location_id = geo_data["location"][0]["id"]
+        normalized_city_name = geo_data["location"][0]["name"]
+
+        # Step 2: 用 LocationID 查实时天气
+        weather_resp = httpx.get(
+            f"https://{host}/v7/weather/now",
+            params={"location": location_id, "key": api_key, "lang": "zh"},
+            timeout=5.0,
+        )
+        weather_resp.raise_for_status()
+        data = weather_resp.json()
+
         if data.get("code") != "200":
             return f"天气查询失败：{data.get('code', '未知错误')}"
+
         now = data["now"]
         return (
-            f"{city}天气：{now['text']}\n"
+            f"{normalized_city_name}天气：{now['text']}\n"
             f"温度：{now['temp']}°C（体感 {now['feelsLike']}°C）\n"
             f"风向：{now['windDir']} {now['windScale']}级\n"
             f"湿度：{now['humidity']}%\n"
