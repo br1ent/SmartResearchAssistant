@@ -1,10 +1,9 @@
-"""闲聊服务：调用 DeepSeek + 长期记忆"""
+"""闲聊服务：LangGraph 上下文组装 + DeepSeek 流式输出 + 长期记忆"""
 import asyncio
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from config.agents import get_agent_settings
-from config.prompts import get_chat_system_prompt
+from agents.chat_graph import ChatGraph
 
 settings = get_agent_settings()
 
@@ -15,6 +14,9 @@ stream_llm = ChatOpenAI(
     temperature=settings.DEEPSEEK_TEMPERATURE,
     max_tokens=settings.DEEPSEEK_MAX_TOKENS,
 )
+
+chat_graph = ChatGraph()
+
 
 class ChatService:
     def __init__(self, db_session):
@@ -68,22 +70,22 @@ class ChatService:
 
     async def chat_stream(self, conversation_id: int, user_message: str):
         self.conv_service.add_message(conv_id=conversation_id, role="user", content=user_message, msg_type="text")
-        history = self.conv_service.get_messages(conversation_id, limit=20)
         uid = self._get_current_user_id(conversation_id)
 
-        memory_text = self._get_user_memory(uid) if uid else ""
+        # 通过 LangGraph 组装上下文
+        state = chat_graph.invoke({
+            "conversation_id": conversation_id,
+            "user_message": user_message,
+            "user_id": uid,
+            "system_prompt": "",
+            "memory_text": "",
+            "history": [],
+            "messages": [],
+        })
+        messages = state["messages"]
+        history = state["history"]
 
-        system_prompt = get_chat_system_prompt()
-        messages = [SystemMessage(content=system_prompt)]
-        if memory_text:
-            messages.append(SystemMessage(content=f"[用户画像]\n{memory_text}"))
-        for msg in history[:-1]:
-            if msg.role == "user":
-                messages.append(HumanMessage(content=msg.content))
-            elif msg.role == "assistant":
-                messages.append(AIMessage(content=msg.content))
-        messages.append(HumanMessage(content=user_message))
-
+        # 流式调用 LLM
         full_reply = ""
         async for chunk in stream_llm.astream(messages):
             text = chunk.content
