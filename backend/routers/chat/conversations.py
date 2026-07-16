@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from config.database import get_db
 from models.user import User
 from utils.auth import get_current_user
-from schemas.chat import ConversationCreate, ConversationOut, MessageOut
+from schemas.chat.chat import ConversationCreate, ConversationOut, MessageOut
 from models.chat import Conversation as ConvModel
 from models.project import Report, Source
 from services.chat import ConversationService

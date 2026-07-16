@@ -1,4 +1,4 @@
-"""消息发送路由（统一入口：闲聊/研究模式）"""
+"""消息发送路由（闲聊流式 + 研究模式）"""
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from config.database import get_db
 from models.user import User
 from utils.auth import get_current_user
-from schemas.chat import SendMessageRequest
+from schemas.chat.chat import SendMessageRequest
 from services.chat import ConversationService
 from services.chat.chat_service import ChatService
 from services.chat.research import ResearchService
@@ -22,7 +22,7 @@ async def send_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """发送消息（根据 mode 自动选择闲聊模式或研究模式）"""
+    """发送研究消息（启动研究模式）"""
     conv_service = ConversationService(db)
 
     # 1. 确定/创建对话
@@ -38,27 +38,14 @@ async def send_message(
             mode=body.mode,
         )
 
-    # 2. 根据模式处理
-    if body.mode == "chat":
-        chat_service = ChatService(db)
-        reply = await chat_service.chat(conv.id, body.message)
-        return {
-            "success": True,
-            "data": {
-                "conversation_id": conv.id,
-                "mode": "chat",
-                "reply": reply,
-            },
-        }
-    else:
-        # research 模式
-        research_service = ResearchService(db)
-        result = await research_service.start_research(
-            conversation_id=conv.id,
-            user_id=current_user.id,
-            topic=body.message,
-        )
-        return result
+    # 2. 研究模式处理
+    research_service = ResearchService(db)
+    result = await research_service.start_research(
+        conversation_id=conv.id,
+        user_id=current_user.id,
+        topic=body.message,
+    )
+    return result
 
 
 @router.post("/send/stream")

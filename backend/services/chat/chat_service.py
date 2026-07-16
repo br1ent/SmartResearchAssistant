@@ -1,11 +1,10 @@
-"""闲聊服务：使用 LangGraph ChatGraph 调用 DeepSeek + 长期记忆"""
+"""闲聊服务：调用 DeepSeek + 长期记忆"""
 import asyncio
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from config.agents import get_agent_settings
 from config.prompts import get_chat_system_prompt
-from agents.chat_graph import ChatGraph
 
 settings = get_agent_settings()
 
@@ -16,9 +15,6 @@ stream_llm = ChatOpenAI(
     temperature=settings.DEEPSEEK_TEMPERATURE,
     max_tokens=settings.DEEPSEEK_MAX_TOKENS,
 )
-
-chat_graph = ChatGraph()
-
 
 class ChatService:
     def __init__(self, db_session):
@@ -64,29 +60,6 @@ class ChatService:
         })
         if result.get("memory_updated"):
             self._update_user_memory(user_id, result["memory_summary"])
-
-    async def chat(self, conversation_id: int, user_message: str) -> str:
-        self.conv_service.add_message(conv_id=conversation_id, role="user", content=user_message, msg_type="text")
-        history = self.conv_service.get_messages(conversation_id, limit=20)
-        uid = self._get_current_user_id(conversation_id)
-
-        hist_list = [{"role": m.role, "content": m.content} for m in history[:-1]]
-        result = await chat_graph.ainvoke({
-            "conversation_id": conversation_id, "user_message": user_message,
-            "history": hist_list, "reply": "",
-        })
-        reply = result["reply"]
-
-        from models.chat import Conversation as ConvModel
-        conv = self.db.query(ConvModel).filter(ConvModel.id == conversation_id).first()
-        if conv and len(history) <= 2:
-            short_title = user_message[:30] + ("..." if len(user_message) > 30 else "")
-            self.conv_service.update_title(conversation_id, short_title)
-
-        self.conv_service.add_message(conv_id=conversation_id, role="assistant", content=reply, msg_type="text")
-        if uid:
-            asyncio.create_task(self._run_memory_extraction(conversation_id, uid))
-        return reply
 
     def _get_current_user_id(self, conversation_id: int) -> int:
         from models.chat import Conversation as ConvModel
