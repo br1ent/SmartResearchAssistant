@@ -21,6 +21,7 @@ class AgentSettings(BaseSettings):
     RESEARCHER_MAX_RESULTS: int = 5
     WRITER_TEMPERATURE: float = 0.6
     REVIEWER_MAX_RETRIES: int = 2
+    CHAT_MAX_ITERATIONS: int = 5
 
 
 @lru_cache

@@ -1,4 +1,4 @@
-"""闲聊 LangGraph：START → build_context → END"""
+"""闲聊 LangGraph：START → build_context → END（工具循环由 service 层协调）"""
 from langgraph.graph import StateGraph, END
 
 from agents.chat_state import ChatState
@@ -6,7 +6,7 @@ from agents.nodes.chat_context_node import build_context_node
 
 
 class ChatGraph:
-    """闲聊上下文组装图：从 DB 构建完整的 LLM 消息列表"""
+    """闲聊图：上下文组装（ReAct 循环由 service 层驱动）"""
 
     def __init__(self):
         builder = StateGraph(ChatState)

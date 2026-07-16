@@ -12,5 +12,8 @@ class ChatState(TypedDict):
     system_prompt: str
     memory_text: str
     history: List[dict]
-    # 组装后的完整消息列表
+    # 组装后的完整消息列表（含 ToolMessage）
     messages: List[BaseMessage]
+    # 工具调用控制
+    iteration: int
+    max_iterations: int

@@ -1,13 +1,16 @@
-"""闲聊服务：LangGraph 上下文组装 + DeepSeek 流式输出 + 长期记忆"""
+"""闲聊服务：LangGraph 上下文组装 + ReAct 工具循环 + DeepSeek 流式输出"""
 import asyncio
 from langchain_openai import ChatOpenAI
 
 from config.agents import get_agent_settings
 from agents.chat_graph import ChatGraph
+from agents.chat_state import ChatState
+from agents.tools import CHAT_TOOLS
+from agents.nodes.chat_tool_node import tool_node
 
 settings = get_agent_settings()
 
-stream_llm = ChatOpenAI(
+_llm = ChatOpenAI(
     api_key=settings.DEEPSEEK_API_KEY,
     base_url=settings.DEEPSEEK_BASE_URL,
     model=settings.DEEPSEEK_MODEL,
@@ -25,13 +28,11 @@ class ChatService:
         self.conv_service = ConversationService(db_session)
 
     def _get_user_memory(self, user_id: int) -> str:
-        """从 users.memory 读取用户记忆"""
         from models.user import User
         user = self.db.query(User).filter(User.id == user_id).first()
         return user.memory if user and user.memory else ""
 
     def _update_user_memory(self, user_id: int, summary: str):
-        """写入 users.memory"""
         from models.user import User
         user = self.db.query(User).filter(User.id == user_id).first()
         if user:
@@ -39,7 +40,6 @@ class ChatService:
             self.db.commit()
 
     async def _run_memory_extraction(self, conversation_id: int, user_id: int):
-        """后台运行记忆提取（每 10 条触发）"""
         from agents.memory_graph import MemoryGraph
         mg = MemoryGraph()
 
@@ -72,8 +72,8 @@ class ChatService:
         self.conv_service.add_message(conv_id=conversation_id, role="user", content=user_message, msg_type="text")
         uid = self._get_current_user_id(conversation_id)
 
-        # 通过 LangGraph 组装上下文
-        state = chat_graph.invoke({
+        # 1. 通过 LangGraph 组装上下文
+        state: ChatState = chat_graph.invoke({
             "conversation_id": conversation_id,
             "user_message": user_message,
             "user_id": uid,
@@ -81,18 +81,48 @@ class ChatService:
             "memory_text": "",
             "history": [],
             "messages": [],
+            "iteration": 0,
+            "max_iterations": settings.CHAT_MAX_ITERATIONS,
         })
         messages = state["messages"]
         history = state["history"]
 
-        # 流式调用 LLM
+        # 2. ReAct 循环：LLM 调用 + 工具执行
+        llm_with_tools = _llm.bind_tools(CHAT_TOOLS)
         full_reply = ""
-        async for chunk in stream_llm.astream(messages):
-            text = chunk.content
-            if text:
-                full_reply += text
-                yield text
 
+        while True:
+            # 调用 LLM（非流式，用于检测 tool_calls）
+            response = await llm_with_tools.ainvoke(messages)
+            messages.append(response)
+
+            # 没有 tool_calls → 最终回复，直接输出
+            if not hasattr(response, "tool_calls") or not response.tool_calls:
+                full_reply = response.content or ""
+                yield full_reply
+                break
+
+            # 有 tool_calls → 执行工具
+            tool_state = tool_node({
+                **state,
+                "messages": messages,
+                "iteration": state["iteration"],
+            })
+            messages.extend(tool_state["messages"])
+            state["iteration"] = tool_state["iteration"]
+
+            # 超过最大轮次 → 强制结束
+            if state["iteration"] >= state["max_iterations"]:
+                break
+
+        # 兜底：如果没产出内容
+        if not full_reply and messages:
+            last = messages[-1]
+            if hasattr(last, "content"):
+                full_reply = last.content
+                yield full_reply
+
+        # 3. 保存回复
         from models.chat import Conversation as ConvModel
         conv = self.db.query(ConvModel).filter(ConvModel.id == conversation_id).first()
         if conv and len(history) <= 2:
