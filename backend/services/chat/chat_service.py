@@ -87,19 +87,35 @@ class ChatService:
         messages = state["messages"]
         history = state["history"]
 
-        # 2. ReAct 循环：LLM 调用 + 工具执行
+        # 2. ReAct 循环：LLM 流式调用 + 工具执行
         llm_with_tools = _llm.bind_tools(CHAT_TOOLS)
         full_reply = ""
 
         while True:
-            # 调用 LLM（非流式，用于检测 tool_calls）
-            response = await llm_with_tools.ainvoke(messages)
-            messages.append(response)
+            full_msg = None
+            buffered_chunks = []
+            saw_tool_call = False
 
-            # 没有 tool_calls → 最终回复，直接输出
-            if not hasattr(response, "tool_calls") or not response.tool_calls:
-                full_reply = response.content or ""
-                yield full_reply
+            async for chunk in llm_with_tools.astream(messages):
+                buffered_chunks.append(chunk)
+                if chunk.tool_call_chunks:
+                    saw_tool_call = True
+                elif chunk.content and not saw_tool_call:
+                    full_reply += chunk.content
+                    yield chunk.content
+
+            if buffered_chunks:
+                full_msg = buffered_chunks[0]
+                for c in buffered_chunks[1:]:
+                    full_msg += c
+
+            if full_msg is None:
+                break
+
+            messages.append(full_msg)
+
+            # 没有 tool_calls → 最终回复完成
+            if not saw_tool_call and not (hasattr(full_msg, 'tool_calls') and full_msg.tool_calls):
                 break
 
             # 有 tool_calls → 执行工具

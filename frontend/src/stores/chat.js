@@ -190,8 +190,6 @@ export const useChatStore = defineStore('chat', () => {
     addMessage({ id: assistantMsgId, role: 'assistant', content: '', msg_type: 'text', created_at: new Date().toISOString() })
 
     try {
-      _abortStream()
-
       _abortController = new AbortController()
       const baseUrl = ''
       const res = await fetch(`${baseUrl}/api/chat/send/stream`, {

@@ -119,7 +119,7 @@ function formatTime(isoStr) {
             </div>
             <div v-if="msg._revised" class="mt-1 text-xs text-base-content/40">已提交修改，正在生成新方案...</div>
           </template>
-          <p v-else class="text-sm whitespace-pre-wrap">{{ msg.content }}</p>
+          <p v-else class="text-sm whitespace-pre-wrap">{{ msg.content }}<span v-if="chatStore.isChatting && msg.role === 'assistant' && i === visibleMessages.length - 1" class="animate-pulse">▌</span></p>
           <p class="text-xs mt-1 text-base-content/40 text-right">{{ formatTime(msg.created_at) }}</p>
         </div>
       </div>
@@ -139,14 +139,6 @@ function formatTime(isoStr) {
             <span class="text-xs text-base-content/40 shrink-0">{{ Math.round(chatStore.researchProgress) }}%</span>
           </div>
           <p class="text-[10px] text-base-content/30 mt-2">研究进行中，请不要离开此页面</p>
-        </div>
-      </div>
-
-      <!-- 闲聊等待 -->
-      <div v-if="chatStore.isChatting" class="flex gap-3 items-start">
-        <AvatarBox role="assistant" />
-        <div class="bg-base-200 rounded-2xl rounded-tl-md px-4 py-2.5">
-          <div class="flex items-center gap-2"><Loader2 class="w-4 h-4 animate-spin text-info" /><span class="text-sm text-base-content/70">思考中...</span></div>
         </div>
       </div>
     </div>

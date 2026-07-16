@@ -19,54 +19,32 @@ def get_current_time() -> str:
     return datetime.now(_CN_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 
-# 常见中文城市名 → 英文名映射
-_CITY_MAP = {
-    "北京": "Beijing", "上海": "Shanghai", "广州": "Guangzhou", "深圳": "Shenzhen",
-    "杭州": "Hangzhou", "南京": "Nanjing", "成都": "Chengdu", "重庆": "Chongqing",
-    "武汉": "Wuhan", "西安": "Xian", "天津": "Tianjin", "苏州": "Suzhou",
-    "长沙": "Changsha", "郑州": "Zhengzhou", "东莞": "Dongguan", "青岛": "Qingdao",
-    "沈阳": "Shenyang", "宁波": "Ningbo", "昆明": "Kunming", "大连": "Dalian",
-    "厦门": "Xiamen", "哈尔滨": "Harbin", "济南": "Jinan", "福州": "Fuzhou",
-    "佛山": "Foshan", "长春": "Changchun", "温州": "Wenzhou", "石家庄": "Shijiazhuang",
-    "南宁": "Nanning", "常州": "Changzhou", "泉州": "Quanzhou", "南昌": "Nanchang",
-    "贵阳": "Guiyang", "太原": "Taiyuan", "烟台": "Yantai", "嘉兴": "Jiaxing",
-    "南通": "Nantong", "金华": "Jinhua", "珠海": "Zhuhai", "惠州": "Huizhou",
-    "徐州": "Xuzhou", "海口": "Haikou", "乌鲁木齐": "Urumqi", "绍兴": "Shaoxing",
-    "中山": "Zhongshan", "台州": "Taizhou", "兰州": "Lanzhou", "潍坊": "Weifang",
-    "保定": "Baoding", "镇江": "Zhenjiang", "扬州": "Yangzhou", "桂林": "Guilin",
-    "唐山": "Tangshan", "三亚": "Sanya", "湖州": "Huzhou", "呼和浩特": "Hohhot",
-    "廊坊": "Langfang", "洛阳": "Luoyang", "威海": "Weihai", "盐城": "Yancheng",
-}
-
-
 @tool
 def get_weather(city: str) -> str:
-    """查询指定城市的当前天气。当用户询问某地天气、温度、是否下雨等问题时使用。
+    """查询指定城市的当前天气。当用户询问某地天气、温度、是否下雨等问题时使用。"""
+    host = settings.QWEATHER_API_HOST
+    api_key = settings.QWEATHER_API_KEY
+    if not host or not api_key:
+        return "天气查询失败：未配置和风天气 API Host 或 API Key"
 
-    Args:
-        city: 城市名称，支持中文如"北京"，或英文如"Beijing"
-    """
     try:
-        # 中文城市名转英文
-        query_city = _CITY_MAP.get(city, city)
         resp = httpx.get(
-            f"https://wttr.in/{query_city}",
-            params={"format": "j1", "lang": "zh"},
+            f"https://{host}/v7/weather/now",
+            params={"location": city},
+            headers={"X-QW-Api-Key": api_key},
             timeout=10.0,
         )
         resp.raise_for_status()
         data = resp.json()
-        current = data["current_condition"][0]
-        desc = current["weatherDesc"][0]["value"]
-        temp = current["temp_C"]
-        feels_like = current["FeelsLikeC"]
-        humidity = current["humidity"]
-        wind = current["windspeedKmph"]
+        if data.get("code") != "200":
+            return f"天气查询失败：{data.get('code', '未知错误')}"
+        now = data["now"]
         return (
-            f"{city}天气：{desc}\n"
-            f"温度：{temp}°C（体感 {feels_like}°C）\n"
-            f"湿度：{humidity}%\n"
-            f"风速：{wind} km/h"
+            f"{city}天气：{now['text']}\n"
+            f"温度：{now['temp']}°C（体感 {now['feelsLike']}°C）\n"
+            f"风向：{now['windDir']} {now['windScale']}级\n"
+            f"湿度：{now['humidity']}%\n"
+            f"更新时间：{data['updateTime']}"
         )
     except Exception as e:
         return f"天气查询失败：{e}"

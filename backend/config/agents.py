@@ -16,6 +16,10 @@ class AgentSettings(BaseSettings):
     # Tavily 搜索
     TAVILY_API_KEY: str = ""
 
+    # 和风天气 (Console V4)
+    QWEATHER_API_HOST: str = ""
+    QWEATHER_API_KEY: str = ""
+
     # Agent 行为控制
     PLANNER_TEMPERATURE: float = 0.5
     RESEARCHER_MAX_RESULTS: int = 5
