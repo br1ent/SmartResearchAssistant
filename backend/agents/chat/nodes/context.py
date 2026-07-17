@@ -2,7 +2,7 @@
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from agents.chat.state import ChatState
-from config.prompts import get_chat_system_prompt
+from config.prompts import get_chat_system_prompt, get_knowledge_system_prompt
 from config.database import SessionLocal
 
 
@@ -13,9 +13,10 @@ def build_context_node(state: ChatState) -> dict:
     mode = state.get("mode", "chat")
 
     # 1. 系统提示词
-    system_prompt = get_chat_system_prompt()
     if mode == "knowledge":
-        system_prompt += "\n\n你是一个基于个人文档的知识库问答助手。用户已上传了包含重要信息的文档。对于用户的任何提问，你必须首先调用 search_knowledge_base 工具检索文档内容，然后基于检索结果回答。只有当工具返回'知识库中没有文档内容'时，才使用你的通用知识。"
+        system_prompt = get_knowledge_system_prompt()
+    else:
+        system_prompt = get_chat_system_prompt()
 
     # 2. 用户记忆（根据模式读取不同字段）
     memory_text = ""

@@ -8,10 +8,10 @@ from config.knowledge_base import get_kb_settings
 kb_settings = get_kb_settings()
 
 
-def _rerank(query: str, documents: list[str]) -> list[str] | list[Any] | None:
-    """调用 qwen3-rerank 对候选文本重排序，返回排序后的结果"""
+def _rerank(query: str, documents: list[str]) -> list[dict] | None:
+    """调用 qwen3-rerank 对候选文本重排序，返回排序后的结果列表"""
     if not kb_settings.RERANK_WORKSPACE_ID or not documents:
-        return documents
+        return None
 
     url = f"https://{kb_settings.RERANK_WORKSPACE_ID}.cn-beijing.maas.aliyuncs.com/compatible-api/v1/reranks"
     try:
@@ -29,11 +29,10 @@ def _rerank(query: str, documents: list[str]) -> list[str] | list[Any] | None:
         if resp.status_code == 200:
             data = resp.json()
             results = data.get("results", [])
-            # 按 relevance_score 降序
             sorted_results = sorted(results, key=lambda r: r.get("relevance_score", 0), reverse=True)
             return sorted_results
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Rerank] ERROR: {e}")
 
     return None
 

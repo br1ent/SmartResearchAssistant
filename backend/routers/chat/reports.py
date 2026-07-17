@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from config.database import get_db
 from models.user import User
-from models.project import Report, Source
+from models.project import Report
 from utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/reports", tags=["报告"])
@@ -76,7 +76,6 @@ def get_report_detail(
     if not report:
         raise HTTPException(status_code=404, detail="报告不存在")
 
-    sources = db.query(Source).filter(Source.report_id == report.id).order_by(Source.index).all()
     return {
         "success": True,
         "data": {
@@ -85,9 +84,5 @@ def get_report_detail(
             "content": report.content,
             "status": report.status,
             "created_at": report.create_at.isoformat() if report.create_at else None,
-            "sources": [
-                {"index": s.index, "title": s.title, "url": s.url, "snippet": s.snippet}
-                for s in sources
-            ],
-        },
-    }
+            },
+        }

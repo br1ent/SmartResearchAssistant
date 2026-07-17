@@ -11,7 +11,7 @@ class AgentPrompt(Base):
     __tablename__ = "agent_prompts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, comment="提示词ID")
-    mode: Mapped[str] = mapped_column(String(20), nullable=False, comment="模式: chat / research")
+    mode: Mapped[str] = mapped_column(String(20), nullable=False, comment="模式: chat / research / knowledge")
     stage: Mapped[str] = mapped_column(
         String(30), default="system",
         comment="阶段: system / planner / researcher / analyst / writer / reviewer"

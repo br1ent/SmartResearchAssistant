@@ -7,7 +7,7 @@ from models.user import User
 from utils.auth import get_current_user
 from schemas.chat.chat import ConversationCreate, ConversationOut, MessageOut
 from models.chat import Conversation as ConvModel
-from models.project import Report, Source
+from models.project import Report
 from services.chat import ConversationService
 
 router = APIRouter(prefix="/api/chat", tags=["对话"])

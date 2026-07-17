@@ -30,3 +30,8 @@ def get_chat_system_prompt() -> str:
 def get_research_prompt(stage: str) -> str:
     """研究模式指定阶段的提示词"""
     return get_prompt("research", stage)
+
+
+def get_knowledge_system_prompt() -> str:
+    """知识检索模式的系统提示词"""
+    return get_prompt("knowledge", "system")

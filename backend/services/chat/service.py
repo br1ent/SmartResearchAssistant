@@ -109,13 +109,21 @@ class ChatService:
             buffered_chunks = []
             saw_tool_call = False
 
-            async for chunk in llm_with_tools.astream(messages):
-                buffered_chunks.append(chunk)
-                if chunk.tool_call_chunks:
-                    saw_tool_call = True
-                elif chunk.content and not saw_tool_call:
-                    full_reply += chunk.content
-                    yield chunk.content
+            try:
+                async for chunk in llm_with_tools.astream(messages):
+                    buffered_chunks.append(chunk)
+                    if chunk.tool_call_chunks:
+                        saw_tool_call = True
+                    elif chunk.content and not saw_tool_call:
+                        full_reply += chunk.content
+                        yield chunk.content
+            except Exception as e:
+                print(f"[ChatStream] LLM stream error: {e}")
+                if full_reply:
+                    break
+                full_reply = "抱歉，请求超时，请重试"
+                yield full_reply
+                break
 
             if buffered_chunks:
                 full_msg = buffered_chunks[0]
@@ -127,8 +135,10 @@ class ChatService:
 
             messages.append(full_msg)
 
+            has_tool_calls = saw_tool_call or (hasattr(full_msg, 'tool_calls') and full_msg.tool_calls)
+
             # 没有 tool_calls → 最终回复完成
-            if not saw_tool_call and not (hasattr(full_msg, 'tool_calls') and full_msg.tool_calls):
+            if not has_tool_calls:
                 break
 
             # 有 tool_calls → 执行工具

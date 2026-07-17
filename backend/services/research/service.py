@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from agents.research.graph import PlanningWorkflow, ExecutionWorkflow
 from config.database import SessionLocal
 from models.chat import Message
-from models.project import Report, Source
+from models.project import Report
 from utils.ws_manager import manager
 
 planning_workflow = PlanningWorkflow()
@@ -234,10 +234,6 @@ class ResearchService:
                     report.content = content
                     report.status = "completed"
                     db.commit()
-
-                for s in state.get("sources", []):
-                    db.add(Source(report_id=report_id, index=s["index"], title=s["title"], url=s["url"], snippet=s.get("snippet", "")))
-                db.commit()
 
                 outline_text = "\n".join(f"- {o}" for o in outline)
                 report_title = state.get("report_title", "研究报告")

@@ -1,6 +1,6 @@
 from models.user import User
 from models.chat import Conversation, Message
-from models.project import Report, Source
+from models.project import Report
 from models.agent_prompt import AgentPrompt
 from models.knowledge_base import KnowledgeDocument
 

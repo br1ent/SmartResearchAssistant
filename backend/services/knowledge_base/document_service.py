@@ -13,7 +13,9 @@ from models.knowledge_base import KnowledgeDocument
 
 kb_settings = get_kb_settings()
 
-_chroma_client = chromadb.PersistentClient(path=kb_settings.CHROMA_PERSIST_DIR)
+_chroma_path = os.path.abspath(kb_settings.CHROMA_PERSIST_DIR)
+os.makedirs(_chroma_path, exist_ok=True)
+_chroma_client = chromadb.PersistentClient(path=_chroma_path)
 
 
 class DashScopeEmbedding:

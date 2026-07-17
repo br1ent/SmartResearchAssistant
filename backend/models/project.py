@@ -1,3 +1,4 @@
+"""Report 模型"""
 from datetime import datetime
 
 from sqlalchemy import ForeignKey, Text
@@ -23,17 +24,3 @@ class Report(Base):
 
     def __repr__(self) -> str:
         return f"<Report {self.id} title={self.title} status={self.status}>"
-
-
-class Source(Base):
-    """引用来源"""
-    __tablename__ = "sources"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True, comment="来源ID")
-    report_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("reports.id", ondelete="CASCADE"), nullable=False, comment="所属报告ID"
-    )
-    index: Mapped[int] = mapped_column(Integer, nullable=False, comment="引用编号")
-    title: Mapped[str] = mapped_column(String(200), nullable=False, comment="标题")
-    url: Mapped[str] = mapped_column(String(500), nullable=False, comment="URL")
-    snippet: Mapped[str | None] = mapped_column(Text, nullable=True, comment="摘要")
