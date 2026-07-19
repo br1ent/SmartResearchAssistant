@@ -21,11 +21,24 @@ async def send_message(
     """发送研究消息（启动研究模式）"""
     conv_service = ConversationService(db)
 
-    # 1. 确定/创建对话
+    # 1. 确定/创建对话 — 研究模式每个对话只研究一个话题
     if body.conversation_id:
         conv = conv_service.get_by_id(body.conversation_id, current_user.id)
         if not conv:
             raise HTTPException(status_code=404, detail="对话不存在")
+        # 如果当前对话已有研究记录，新建对话隔离话题
+        from models.project import Report
+        has_report = db.query(Report).filter(
+            Report.conversation_id == conv.id,
+            Report.status.in_(["completed", "generating", "awaiting_confirm"]),
+        ).first()
+        if has_report:
+            title = body.message[:30] + ("..." if len(body.message) > 30 else "")
+            conv = conv_service.create(
+                user_id=current_user.id,
+                title=title,
+                mode=body.mode,
+            )
     else:
         title = body.message[:30] + ("..." if len(body.message) > 30 else "")
         conv = conv_service.create(

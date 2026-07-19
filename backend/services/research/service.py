@@ -195,7 +195,7 @@ class ResearchService:
                 "topic": topic, "user_id": user_id, "conversation_id": conversation_id,
                 "outline": outline, "subtasks": subtasks,
                 "search_results": [], "analysis": "",
-                "report_title": "", "report_draft": "", "final_report": "", "sources": [],
+                "report_title": "", "report_draft": "", "final_report": "",
                 "status": "running", "progress": 25.0, "error": None, "reviewer_retries": 0, "reviewer_feedback": None,
             }
 
@@ -211,21 +211,14 @@ class ResearchService:
             from agents.research.nodes.writer import writer_node
             state.update(await writer_node(state))
 
-            retries = 0
-            while retries <= 2:
-                await agent_broadcast("reviewer", "正在审查报告质量", "从完整性、准确性、深度等维度评分...", 85)
-                from agents.research.nodes.reviewer import reviewer_node
+            await agent_broadcast("reviewer", "正在审查报告质量", "从完整性、准确性、深度等维度评分...", 82)
+            from agents.research.nodes.reviewer import reviewer_node
+            state.update(await reviewer_node(state))
+            if state["status"] != "completed":
+                await agent_broadcast("writer", "正在根据审查意见修改报告", "优化内容...", 88)
+                state.update(await writer_node(state))
+                await agent_broadcast("reviewer", "正在再次审查报告", "最终质量检查...", 95)
                 state.update(await reviewer_node(state))
-                if state["status"] == "completed":
-                    break
-                retries += 1
-                if retries <= 2:
-                    await agent_broadcast("writer", "正在根据审查意见修改报告", f"第 {retries} 次修改，优化内容...", 75)
-                    # 合并 reviewer 返回的状态再传给 writer
-                    writer_result = await writer_node(state)
-                    # 保留 reviewer_retries，避免 writer 清掉
-                    state.update(writer_result)
-                    # 确保 reviewer_retries 不被 writer 覆盖（writer 不返回此字段，update 不会删除）
 
             final_report = state.get("final_report") or state.get("report_draft", "")
 
@@ -240,12 +233,11 @@ class ResearchService:
 
                 outline_text = "\n".join(f"- {o}" for o in outline)
                 report_title = state.get("report_title", "研究报告")
-                source_count = len(state.get("sources", []))
                 summary = (
                     f"📄 研究报告已生成\n\n"
                     f"标题：{report_title}\n"
                     f"大纲\n{outline_text}\n"
-                    f"引用来源：共 {source_count} 篇\n"
+                    f"预计字数：约 {len(content)} 字\n\n"
                     f"预计字数：约 {len(content)} 字\n\n"
                     f"报告已保存到「我的报告」页面。"
                 )

@@ -4,4 +4,4 @@ from models.project import Report
 from models.agent_prompt import AgentPrompt
 from models.knowledge_base import KnowledgeDocument
 
-__all__ = ["User", "Conversation", "Message", "Report", "Source", "AgentPrompt", "KnowledgeDocument"]
+__all__ = ["User", "Conversation", "Message", "Report", "AgentPrompt", "KnowledgeDocument"]

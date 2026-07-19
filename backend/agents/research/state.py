@@ -17,14 +17,6 @@ class SearchResultItem(TypedDict):
     score: float
 
 
-class SourceItem(TypedDict):
-    """引用来源（带编号，用于报告中标注）"""
-    index: int
-    title: str
-    url: str
-    snippet: str
-
-
 class ResearchState(TypedDict):
     """LangGraph 研究状态"""
 
@@ -47,7 +39,6 @@ class ResearchState(TypedDict):
     report_title: str                   # 报告标题
     report_draft: str                   # 报告草稿
     final_report: str                   # 最终报告
-    sources: List[SourceItem]           # 引用来源列表（带编号）
 
     # 控制
     status: str                         # running / planning / searching / analyzing / writing / reviewing / completed / failed

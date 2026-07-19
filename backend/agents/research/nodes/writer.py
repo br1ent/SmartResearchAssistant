@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from config.agents import get_agent_settings
 from config.prompts import get_research_prompt
-from agents.research.state import ResearchState, SourceItem
+from agents.research.state import ResearchState
 
 settings = get_agent_settings()
 
@@ -49,14 +49,8 @@ async def writer_node(state: ResearchState) -> dict:
         "feedback_section": feedback_section,
     })
 
-    sources = [
-        SourceItem(index=i + 1, title=r["title"], url=r["url"], snippet=r["content"][:200])
-        for i, r in enumerate(state["search_results"])
-    ]
-
     return {
         "report_draft": response.content,
-        "sources": sources,
         "status": "writing",
         "progress": 80.0,
     }

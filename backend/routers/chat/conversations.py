@@ -88,7 +88,6 @@ def get_report(
     if not report:
         raise HTTPException(status_code=404, detail="该对话暂无报告")
 
-    sources = db.query(Source).filter(Source.report_id == report.id).order_by(Source.index).all()
     return {
         "success": True,
         "data": {
@@ -96,8 +95,6 @@ def get_report(
             "title": report.title,
             "content": report.content,
             "status": report.status,
-            "created_at": report.create_at.isoformat() if report.create_at else None,
-            "sources": [{"index": s.index, "title": s.title, "url": s.url, "snippet": s.snippet} for s in sources],
         },
     }
 

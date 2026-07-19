@@ -29,7 +29,6 @@ def _make_initial_state(topic: str, user_id: int, conversation_id: int) -> Resea
         "report_title": "",
         "report_draft": "",
         "final_report": "",
-        "sources": [],
         "status": "running",
         "progress": 0.0,
         "error": None,
