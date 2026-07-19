@@ -1,5 +1,4 @@
 """知识库检索服务（召回 + 重排序）"""
-from typing import Any
 
 import httpx
 from services.knowledge_base.document_service import _get_collection, embeddings

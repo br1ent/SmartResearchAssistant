@@ -3,7 +3,6 @@ from datetime import datetime, timezone, timedelta
 
 import httpx
 from langchain_core.tools import tool
-from langchain_tavily import TavilySearch
 
 from config.agents import get_agent_settings
 
@@ -81,18 +80,26 @@ def web_search(query: str) -> str:
         query: 搜索关键词
     """
     try:
-        tool = TavilySearch(
+        from langchain_community.tools.tavily_search import TavilySearchResults
+        tool = TavilySearchResults(
             tavily_api_key=settings.TAVILY_API_KEY,
             max_results=3,
         )
-        results = tool.invoke({"query": query})
-        lines = []
-        for i, r in enumerate(results, 1):
-            title = r.get("title", "无标题")
-            url = r.get("url", "")
-            content = r.get("content", "")[:300]
-            lines.append(f"{i}. **{title}**\n   {url}\n   {content}")
-        return "\n\n".join(lines) if lines else "未找到相关结果"
+        results = tool.invoke(query)
+        if isinstance(results, list):
+            lines = []
+            for i, r in enumerate(results, 1):
+                if isinstance(r, dict):
+                    title = r.get("title", "无标题")
+                    url = r.get("url", "")
+                    content = r.get("content", "")[:300]
+                else:
+                    content = str(r)[:300]
+                    title = content[:50]
+                    url = ""
+                lines.append(f"{i}. **{title}**\n   {url}\n   {content}")
+            return "\n\n".join(lines) if lines else "未找到相关结果"
+        return str(results)[:1000]
     except Exception as e:
         return f"搜索失败：{e}"
 
