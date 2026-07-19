@@ -32,7 +32,7 @@ async function openCropModal(dataUrl) {
   if (!croppie) {
     croppie = new Croppie(croppieContainer.value, {
       viewport: { width: 200, height: 200, type: 'square' },
-      boundary: { width: 300, height: 300 },
+      boundary: { width: 260, height: 300 },
       enableOrientation: true,
       enforceBoundary: true,
     })
@@ -92,7 +92,7 @@ function cancelCrop() {
     <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
 
     <dialog ref="cropModal" class="modal">
-      <div class="modal-box transition-none max-w-[calc(100vw-1rem)]">
+      <div class="modal-box transition-none max-w-xs">
         <button class="btn btn-circle btn-sm btn-ghost float-end" @click="cancelCrop">✕</button>
 
         <div ref="croppieContainer" class="flex flex-col justify-center my-4"></div>
