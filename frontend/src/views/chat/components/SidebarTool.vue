@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from 'vue'
 import { MessageSquarePlus, Search } from '@lucide/vue'
 
 const emit = defineEmits(['newChat', 'showSearch'])

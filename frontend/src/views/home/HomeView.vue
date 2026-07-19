@@ -18,7 +18,7 @@ const features = [
   {
     icon: MessageCircle,
     title: '闲聊模式',
-    desc: '基于 DeepSeek 大模型的智能对话，支持联网搜索、天气查询、实时时间等工具调用',
+    desc: '可以跟大模型聊天解闷，越聊大模型越懂你，并且支持联网搜索',
     color: 'text-primary',
   },
   {

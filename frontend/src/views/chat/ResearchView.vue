@@ -59,7 +59,7 @@ watch(() => chatStore.currentPlan, (val) => {
         <div class="flex items-center justify-between px-3 py-3 border-b border-base-200">
           <div class="flex items-center gap-3">
             <PanelLeft class="w-5 h-5 shrink-0 text-base-content/60" />
-            <span class="font-semibold">多智能体研究</span>
+            <span class="font-semibold">研思</span>
           </div>
           <button class="btn btn-ghost btn-xs btn-circle" @click="sidebarOpen = false" title="收起侧边栏">
             <PanelLeftClose class="w-5 h-5" />

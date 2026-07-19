@@ -74,7 +74,7 @@ onMounted(() => {
         >
           <MessageCircle class="w-5 h-5 shrink-0 text-base-content/40" />
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">{{ conv.title }}</p>
+            <p class="text-sm font-medium truncate" :title="conv.title">{{ conv.title }}</p>
             <p class="text-xs text-base-content/30">{{ conv.id }}</p>
           </div>
         </div>
