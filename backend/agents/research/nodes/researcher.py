@@ -2,14 +2,14 @@
 import asyncio
 from typing import List
 
-from langchain_tavily import TavilySearch
+from langchain_community.tools.tavily_search import TavilySearchResults
 
 from config.agents import get_agent_settings
 from agents.research.state import ResearchState, ResearchSubtask, SearchResultItem
 
 settings = get_agent_settings()
 
-tavily = TavilySearch(
+tavily = TavilySearchResults(
     tavily_api_key=settings.TAVILY_API_KEY,
     max_results=settings.RESEARCHER_MAX_RESULTS,
 )
@@ -18,26 +18,40 @@ tavily = TavilySearch(
 async def _search_one(subtask: ResearchSubtask) -> List[SearchResultItem]:
     """搜索单个子任务"""
     try:
-        results = await tavily.ainvoke({"query": subtask["description"]})
+        results = await asyncio.wait_for(
+            tavily.ainvoke({"query": subtask["description"]}),
+            timeout=30.0,
+        )
+        if isinstance(results, str):
+            return [SearchResultItem(title=subtask["description"], url="", content=results[:500], score=0.0)]
         items = []
         for r in results:
-            items.append(SearchResultItem(
-                title=r.get("title", ""),
-                url=r.get("url", ""),
-                content=r.get("content", ""),
-                score=r.get("score", 0.0),
-            ))
+            if isinstance(r, dict):
+                items.append(SearchResultItem(
+                    title=r.get("title", ""),
+                    url=r.get("url", ""),
+                    content=r.get("content", ""),
+                    score=r.get("score", 0.0),
+                ))
+            else:
+                items.append(SearchResultItem(
+                    title=str(r)[:100],
+                    url="",
+                    content=str(r)[:500],
+                    score=0.0,
+                ))
         return items
+    except asyncio.TimeoutError:
+        return []
     except Exception:
         return []
 
 
 async def researcher_node(state: ResearchState) -> dict:
-    """搜索节点：并行搜索所有子任务（async，支持 LangGraph ainvoke）"""
+    """搜索节点：并行搜索所有子任务"""
     all_results: List[SearchResultItem] = []
     subtasks = state["subtasks"]
 
-    # 并行搜索
     tasks = [_search_one(s) for s in subtasks]
     results_list = await asyncio.gather(*tasks)
 

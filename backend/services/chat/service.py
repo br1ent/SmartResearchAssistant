@@ -77,12 +77,12 @@ class ChatService:
         self.conv_service.add_message(conv_id=conversation_id, role="user", content=user_message, msg_type="text")
         uid = self._get_current_user_id(conversation_id)
 
-        # 知识库模式绑定额外工具
+        # 知识库模式绑定知识库工具，不带联网搜索
         tools = CHAT_TOOLS
         if mode == "knowledge":
             import agents.chat.tools as tools_mod
             tools_mod._current_user_id = uid
-            tools = CHAT_TOOLS + KB_TOOLS
+            tools = KB_TOOLS
 
         # 1. 通过 LangGraph 组装上下文
         state: ChatState = chat_graph.invoke({

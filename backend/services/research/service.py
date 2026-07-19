@@ -188,8 +188,11 @@ class ResearchService:
                     "progress": progress,
                 })
 
+            report = db.query(Report).filter(Report.id == report_id).first()
+            topic = report.title if report else ""
+
             state = {
-                "topic": "", "user_id": user_id, "conversation_id": conversation_id,
+                "topic": topic, "user_id": user_id, "conversation_id": conversation_id,
                 "outline": outline, "subtasks": subtasks,
                 "search_results": [], "analysis": "",
                 "report_title": "", "report_draft": "", "final_report": "", "sources": [],
@@ -218,16 +221,16 @@ class ResearchService:
                 retries += 1
                 if retries <= 2:
                     await agent_broadcast("writer", "正在根据审查意见修改报告", f"第 {retries} 次修改，优化内容...", 75)
-                    state.update(await writer_node(state))
+                    # 合并 reviewer 返回的状态再传给 writer
+                    writer_result = await writer_node(state)
+                    # 保留 reviewer_retries，避免 writer 清掉
+                    state.update(writer_result)
+                    # 确保 reviewer_retries 不被 writer 覆盖（writer 不返回此字段，update 不会删除）
 
             final_report = state.get("final_report") or state.get("report_draft", "")
 
             if final_report:
                 content = final_report
-                if state.get("sources"):
-                    content += "\n\n---\n## 参考资料\n"
-                    for s in state["sources"]:
-                        content += f"- [{s['index']}] {s['title']} — {s['url']}\n"
 
                 report = db.query(Report).filter(Report.id == report_id).first()
                 if report:

@@ -34,4 +34,7 @@ def get_research_prompt(stage: str) -> str:
 
 def get_knowledge_system_prompt() -> str:
     """知识检索模式的系统提示词"""
-    return get_prompt("knowledge", "system")
+    prompt = get_prompt("knowledge", "system")
+    if not prompt:
+        prompt = "你是一个文档问答助手。请根据用户上传的文档内容回答问题，使用纯文本格式，不要使用Markdown。"
+    return prompt
